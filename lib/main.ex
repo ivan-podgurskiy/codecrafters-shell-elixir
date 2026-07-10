@@ -3,9 +3,9 @@ defmodule CLI do
     run_terminal()
   end
 
-  def run_terminal do
+  def run_terminal() do
     case IO.gets("$ ") do
-      "exit" ->
+      {:error, _} ->
         IO.puts("\nBye")
 
       input ->
