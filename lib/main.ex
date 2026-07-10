@@ -16,11 +16,11 @@ defmodule CLI do
         case handle_command(command, args) do
           {:continue, output} ->
             IO.puts(output)
+
             run_terminal()
 
           {:exit, _} ->
-            # quit
-            IO.puts("Bye!")
+            :ok
         end
     end
   end
