@@ -1,0 +1,3 @@
+%{
+  "shell_words": {:hex, :shell_words, "0.1.0", "fba106264fc91850e90b0b90863f490862a2f0bcac9bdb1edb4f532786351279", [:mix], [], "hexpm", "c4d8ec33cc472e379e9d578a0fc959e5d7078d85985dc27bab0cc302a58498a0"},
+}

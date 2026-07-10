@@ -1,4 +1,5 @@
 defmodule CLI do
+  require Logger
   def main(_args) do
     run_terminal()
   end
@@ -9,17 +10,23 @@ defmodule CLI do
         IO.puts("\nBye")
 
       input ->
-        res =
-          input
-          |> String.trim()
-          |> handle_command()
+        {:ok, [command | args]} = parse_input(input)
 
-        if res != :exit do
-          run_terminal()
+        case handle_command(command, args) do
+          {:continue, output} ->
+            IO.puts(output)
+            run_terminal()
+          {:exit, _} ->
+            # quit
+            IO.puts("Bye!")
         end
     end
   end
 
-  def handle_command("exit"), do: :exit
-  def handle_command(command), do: IO.puts("#{command}: command not found")
+  def parse_input(input) do
+    ShellWords.split(input)
+  end
+
+  def handle_command("exit", _), do: {:exit, :exit_command}
+  def handle_command(command, _), do: {:continue, "#{command}: command not found"}
 end
