@@ -1,32 +1,41 @@
 defmodule CLI do
-  require Logger
-
   @builtin_commands ["exit", "echo", "type"]
 
   def main(_args) do
     run_terminal()
   end
 
-  defp run_terminal() do
+  defp run_terminal do
     case IO.gets("$ ") do
       :eof ->
         :ok
 
-      {:error, _} ->
+      {:error, _reason} ->
         :ok
 
       input ->
-        {:ok, [command | args]} = parse_input(input)
-
-        case handle_command(command, args) do
-          {:continue, output} ->
-            IO.write(output)
-
+        case parse_input(input) do
+          {:ok, []} ->
             run_terminal()
 
-          {:exit, _} ->
-            :ok
+          {:ok, [command | args]} ->
+            execute_command(command, args)
+
+          {:error, reason} ->
+            IO.puts("Parse error: #{inspect(reason)}")
+            run_terminal()
         end
+    end
+  end
+
+  defp execute_command(command, args) do
+    case handle_command(command, args) do
+      {:continue, output} ->
+        IO.write(output)
+        run_terminal()
+
+      :exit ->
+        :ok
     end
   end
 
@@ -34,46 +43,57 @@ defmodule CLI do
     ShellWords.split(input)
   end
 
-  defp handle_command("exit", _), do: {:exit, :exit_command}
-  defp handle_command("echo", args), do: {:continue, Enum.join(args, " ")}
+  defp handle_command("exit", _args) do
+    :exit
+  end
 
-  defp handle_command("type", [command]) when command in @builtin_commands do
-    {:continue, "#{command} is a shell builtin"}
+  defp handle_command("echo", args) do
+    {:continue, Enum.join(args, " ") <> "\n"}
+  end
+
+  defp handle_command("type", [command])
+       when command in @builtin_commands do
+    {:continue, "#{command} is a shell builtin\n"}
   end
 
   defp handle_command("type", [command]) do
-    os_executable = file_exist_in_any_path_and_executable(command)
-
-    case os_executable do
-      false ->
-        {:continue, "#{command}: not found"}
+    case find_executable(command) do
+      nil ->
+        {:continue, "#{command}: not found\n"}
 
       file_path ->
-        {:continue, "#{command} is #{file_path}"}
+        {:continue, "#{command} is #{file_path}\n"}
     end
   end
 
-  defp handle_command(command, args) do
-    os_executable = file_exist_in_any_path_and_executable(command)
+  defp handle_command("type", _args) do
+    {:continue, "type: expected one argument\n"}
+  end
 
-    case os_executable do
-      false ->
-        {:continue, "#{command}: command not found"}
+  defp handle_command(command, args) do
+    case find_executable(command) do
+      nil ->
+        {:continue, "#{command}: command not found\n"}
 
       file_path ->
-        {output, _exit_status} = System.cmd(file_path, args, arg0: command)
+        {output, _exit_status} =
+          System.cmd(file_path, args,
+            arg0: command,
+            stderr_to_stdout: true
+          )
+
         {:continue, output}
     end
   end
 
-  defp file_exist_in_any_path_and_executable(command) do
-    paths = get_os_paths()
-    found = Enum.find(paths, fn path -> executable?(path <> "/" <> command) end)
+  defp find_executable(command) do
+    Enum.find_value(get_os_paths(), fn path ->
+      file_path = Path.join(path, command)
 
-    case found do
-      nil -> false
-      path -> path <> "/" <> command
-    end
+      if executable?(file_path) do
+        file_path
+      end
+    end)
   end
 
   defp get_os_paths do
