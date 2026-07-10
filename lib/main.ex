@@ -7,7 +7,7 @@ defmodule CLI do
     run_terminal()
   end
 
-  def run_terminal() do
+  defp run_terminal() do
     case IO.gets("$ ") do
       :eof ->
         :ok
@@ -30,20 +30,62 @@ defmodule CLI do
     end
   end
 
-  def parse_input(input) do
+  defp parse_input(input) do
     ShellWords.split(input)
   end
 
-  def handle_command("exit", _), do: {:exit, :exit_command}
-  def handle_command("echo", args), do: {:continue, Enum.join(args, " ")}
+  defp handle_command("exit", _), do: {:exit, :exit_command}
+  defp handle_command("echo", args), do: {:continue, Enum.join(args, " ")}
 
-  def handle_command("type", [command]) when command in @builtin_commands do
+  defp handle_command("type", [command]) when command in @builtin_commands do
     {:continue, "#{command} is a shell builtin"}
   end
 
-  def handle_command("type", [command]) do
+  defp handle_command("type", [command]) do
     {:continue, "#{command}: not found"}
   end
 
-  def handle_command(command, _), do: {:continue, "#{command}: command not found"}
+  defp handle_command(command, args) do
+    os_executable = file_exist_in_any_path_and_executable(command)
+
+    case os_executable do
+      false ->
+        {:continue, "#{command}: command not found"}
+
+      _file_path ->
+        {output, _exit_status} = System.cmd(command, args)
+        {:continue, output}
+    end
+  end
+
+  defp file_exist_in_any_path_and_executable(command) do
+    paths = get_os_paths()
+    found = Enum.find(paths, fn path -> executable?(path <> "/" <> command) end)
+
+    case found do
+      nil -> false
+      path -> path <> "/" <> command
+    end
+  end
+
+  defp get_os_paths do
+    separator =
+      case :os.type() do
+        {:win32, _} -> ";"
+        _ -> ":"
+      end
+
+    System.get_env("PATH", "")
+    |> String.split(separator, trim: true)
+  end
+
+  defp executable?(path) do
+    case File.stat(path) do
+      {:ok, %{type: :regular, mode: mode}} ->
+        Bitwise.band(mode, 0o111) != 0
+
+      _ ->
+        false
+    end
+  end
 end
