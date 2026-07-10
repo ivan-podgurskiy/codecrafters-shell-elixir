@@ -1,5 +1,6 @@
 defmodule CLI do
   require Logger
+
   def main(_args) do
     run_terminal()
   end
@@ -16,6 +17,7 @@ defmodule CLI do
           {:continue, output} ->
             IO.puts(output)
             run_terminal()
+
           {:exit, _} ->
             # quit
             IO.puts("Bye!")
@@ -28,5 +30,6 @@ defmodule CLI do
   end
 
   def handle_command("exit", _), do: {:exit, :exit_command}
+  def handle_command("echo", args), do: {:continue, Enum.join(args, " ")}
   def handle_command(command, _), do: {:continue, "#{command}: command not found"}
 end
