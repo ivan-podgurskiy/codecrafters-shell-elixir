@@ -60,7 +60,7 @@ defmodule CLI do
       false ->
         {:continue, "#{command}: command not found"}
 
-      _file_path ->
+      file_path ->
         {output, _exit_status} = System.cmd(file_path, args, arg0: command)
         {:continue, output}
     end
