@@ -42,7 +42,15 @@ defmodule CLI do
   end
 
   defp handle_command("type", [command]) do
-    {:continue, "#{command}: not found"}
+    os_executable = file_exist_in_any_path_and_executable(command)
+
+    case os_executable do
+      false ->
+        {:continue, "#{command}: not found"}
+
+      file_path ->
+        {:continue, "#{command} is #{file_path}"}
+    end
   end
 
   defp handle_command(command, args) do
