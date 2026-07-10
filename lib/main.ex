@@ -20,7 +20,7 @@ defmodule CLI do
 
         case handle_command(command, args) do
           {:continue, output} ->
-            IO.puts(output)
+            IO.write(output)
 
             run_terminal()
 
