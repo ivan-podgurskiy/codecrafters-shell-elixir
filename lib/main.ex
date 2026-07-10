@@ -9,13 +9,17 @@ defmodule CLI do
         IO.puts("\nBye")
 
       input ->
-        input
-        |> String.trim()
-        |> handle_command()
+        res =
+          input
+          |> String.trim()
+          |> handle_command()
 
-        run_terminal()
+        if res != :exit do
+          run_terminal()
+        end
     end
   end
 
+  def handle_command("exit"), do: :exit
   def handle_command(command), do: IO.puts("#{command}: command not found")
 end
