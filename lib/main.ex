@@ -70,6 +70,10 @@ defmodule CLI do
     {:continue, "type: expected one argument\n"}
   end
 
+  defp handle_command("pwd", _args) do
+    {:continue, File.cwd! <> "\n"}
+  end
+
   defp handle_command(command, args) do
     case find_executable(command) do
       nil ->
