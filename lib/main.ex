@@ -1,5 +1,5 @@
 defmodule CLI do
-  @builtin_commands ["exit", "echo", "type"]
+  @builtin_commands ["exit", "echo", "type", "pwd"]
 
   def main(_args) do
     run_terminal()
